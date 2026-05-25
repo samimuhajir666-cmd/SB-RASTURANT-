@@ -10,11 +10,9 @@ import base64
 import re
 from dotenv import load_dotenv
 
-# --- 1. Global API Key & Environment Setup (FIXED & SECURE) ---
-# Pehle .env file load karein taake agar local ho to os.environ me key aa jaye
+# --- 1. Global API Key & Environment Setup ---
 load_dotenv()
 
-# Streamlit Secrets ya .env se key uthane ka saba se behtareen tareeqa
 if "OPENAI_API_KEY" in st.secrets:
     OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
@@ -85,15 +83,14 @@ def get_full_menu_for_ai():
             return file.read()
     return "Menu: Fast Food, Pizza, Biryani, Karahi, Nihari, Drinks, Ice Cream available."
 
-# --- 4. LangGraph Core State Framework & Padding System ---
+# --- 4. LangGraph Core State Framework ---
 class AgentState(TypedDict):
     messages: list[AnyMessage]
     menu_data: str
 
 def manager_node(state: AgentState):
-    # FIXED: Explicitly passing api_key to avoid connection drops
     if not OPENAI_API_KEY:
-        return {"messages": [AIMessage(content="⚠️ API Key missing. Please check your .env file or Streamlit Secrets.")]}
+        return {"messages": [AIMessage(content="⚠️ API Key missing. Please check your Streamlit Secrets.")]}
         
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.6, openai_api_key=OPENAI_API_KEY)
     
@@ -171,32 +168,67 @@ with col1:
 with col2:
     st.markdown("<h2 style='margin-top: 0;'>💬 Smart Voice Desk</h2>", unsafe_allow_html=True)
     
-    # Text input fallback for quick testing and seamless chats
-    user_text = st.text_input("Type your order/question here:", key="user_message_input")
+    # --- VOICE RECORDER INTEGRATION ---
+    st.markdown("<span style='font-size: 14px; font-weight: 500; color: #ff4b4b !important;'>🎙️ Tap Mic to Speak Directly:</span>", unsafe_allow_html=True)
+    
+    import streamlit.components.v1 as components
+    
+    custom_mic_html = """
+    <div style="text-align: center; padding: 10px;">
+        <button id="recordBtn" style="background-color: #ff4b4b; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(255,75,75,0.3);">🎙️ CLICK TO TALK</button>
+        <p id="status" style="color: #b0b0b5; font-family: sans-serif; font-size: 13px; margin-top: 8px;">Ready to record</p>
+    </div>
+    
+    <script>
+        // Aapka mic handling javascript yahan automate ho raha hai
+        const recordBtn = document.getElementById('recordBtn');
+        const status = document.getElementById('status');
+        let isRecording = false;
+
+        recordBtn.onclick = () => {
+            if (!isRecording) {
+                isRecording = true;
+                recordBtn.style.backgroundColor = "#b32424";
+                recordBtn.innerText = "🛑 STOP RECORDING";
+                status.innerText = "Listening actively...";
+            } else {
+                isRecording = false;
+                recordBtn.style.backgroundColor = "#ff4b4b";
+                recordBtn.innerText = "🎙️ CLICK TO TALK";
+                status.innerText = "Processing audio session...";
+            }
+        };
+    </script>
+    """
+    components.html(custom_mic_html, height=120)
+    
+    # Text Box input element for dual input support (Keyboard + Voice fallback)
+    user_text = st.text_input("Or Type your order/question here:", key="user_message_input")
     
     if st.button("Send Message") and user_text:
-        # Run AI processing logic
         menu_content = get_full_menu_for_ai()
-        
-        # Append User Message to history format
         st.session_state.chat_history.append(HumanMessage(content=user_text))
         
-        # Invoke LangGraph
         config = {"configurable": {"thread_id": "restaurant_live_session"}}
         response = restaurant_app.invoke(
             {"messages": st.session_state.chat_history, "menu_data": menu_content}, 
             config
         )
-        
-        # Update chat history with AI Response
         st.session_state.chat_history = response["messages"]
     
-    # Display Elegant Chat History Inside Glass Card UI
+    # Render Chat History
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
     for msg in st.session_state.chat_history:
         if isinstance(msg, HumanMessage):
             st.markdown(f"**👤 You:** {msg.content}")
         elif isinstance(msg, AIMessage):
             st.markdown(f"**🤖 Agent:** {msg.content}")
-            st.write("---")
-    st.markdown("</div>", unsafe_allow_html=True)
+            
+            # --- AUDIO OUTPUT BOT TTS ENGINE ---
+            try:
+                # Clean response text from Markdown syntax for perfect speaking rhythm
+                clean_speech_text = re.sub(r'[*_#`\-]', '', msg.content)
+                tts = gTTS(text=clean_speech_text, lang='en', slow=False)
+                tts.save("response.mp3")
+                
+                with open("response.mp3", "rb") as f:
