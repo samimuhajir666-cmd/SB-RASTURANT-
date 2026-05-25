@@ -8,6 +8,9 @@ from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIM
 from gtts import gTTS
 import base64
 import re
+from dotenv import load_dotenv
+load_dotenv()
+api_key = os.getenv('OPENAI_API_KEY')
 
 # --- 1. Global API Key & Environment Setup (SECURE VERSION) ---
 # Streamlit ke Secrets se key automatic uthane ka tareeqa
