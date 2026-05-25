@@ -169,46 +169,7 @@ with col2:
     processed_query = ""
     
     # 🎙️ LIVE VOICE RECORDER CONTROLLER
-    st.markdown("<span style='font-size: 14px; font-weight: 500; color: #ff4b4b !important;'>🎙️ Tap Mic to Speak Directly:</span>", unsafe_allow_html=True)
-    
-    custom_mic_html = """
-    <div style="text-align: center; padding: 10px;">
-        <button id="recordBtn" style="background-color: #ff4b4b; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(255,75,75,0.3); transition: 0.3s;">🎙️ CLICK TO TALK</button>
-        <p id="status" style="color: #b0b0b5; font-family: sans-serif; font-size: 13px; margin-top: 8px;">Ready to record</p>
-    </div>
-    <script>
-        let mediaRecorder; let audioChunks = []; const recordBtn = document.getElementById('recordBtn'); const status = document.getElementById('status'); let isRecording = false;
-        recordBtn.onclick = async () => {
-            if (!isRecording) {
-                audioChunks = []; const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); const reader = new FileReader(); reader.readAsDataURL(audioBlob);
-                    reader.onloadend = () => { const base64Audio = reader.result.split(',')[1]; window.parent.postMessage({type: 'streamlit:setComponentValue', value: base64Audio}, '*'); };
-                    status.innerText = "Processing Voice..."; recordBtn.style.backgroundColor = "#ff4b4b"; recordBtn.innerText = "🎙️ CLICK TO TALK";
-                };
-                mediaRecorder.start(); isRecording = true; status.innerText = "🔴 Listening... Speak now!"; recordBtn.style.backgroundColor = "#d32f2f"; recordBtn.innerText = "⏹️ STOP RECORDING";
-            } else { mediaRecorder.stop(); isRecording = false; }
-        };
-    </script>
-    """
-    voice_data = components.html(custom_mic_html, height=100)
-    
-    if voice_data:
-        with st.spinner("Converting voice to text..."):
-            try:
-                raw_voice_bytes = base64.b64decode(voice_data)
-                client = OpenAI(api_key=OPENAI_API_KEY)
-                transcription = client.audio.transcriptions.create(model="whisper-1", file=("live_audio.wav", raw_voice_bytes, "audio/wav"))
-                if transcription.text:
-                    processed_query = transcription.text
-                    st.info(f"🗣️ You Said: \"{processed_query}\"")
-            except Exception as e:
-                st.error(f"Voice Processor Note: {str(e)}")
-
-    st.write("---")
-    
-    # ⌨️ TEXT FORM INPUT
+  # ⌨️ TEXT FORM INPUT
     with st.form(key="chat_form", clear_on_submit=True):
         text_query = st.text_input("Or type your message here instead:")
         submit_button = st.form_submit_button(label="Send Message")
