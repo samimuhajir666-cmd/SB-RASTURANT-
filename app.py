@@ -169,7 +169,7 @@ with col1:
 
 # --- RIGHT COLUMN: AI CHATBOT SALES COUNTER (WITH PREMIUM MIC) ---
 with col2:
-    st.markdown("<h2 style='margin-top: 0;'>💬 Smart Counter Desk</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='margin-top: 0;'>💬SB-COUNTER-AGENT</h2>", unsafe_allow_html=True)
     
     processed_query = ""
     
