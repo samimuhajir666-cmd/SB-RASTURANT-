@@ -168,7 +168,6 @@ with col1:
 with col2:
     st.markdown("<h2 style='margin-top: 0;'>💬 Smart Voice Desk</h2>", unsafe_allow_html=True)
     
-    # --- VOICE RECORDER INTEGRATION ---
     st.markdown("<span style='font-size: 14px; font-weight: 500; color: #ff4b4b !important;'>🎙️ Tap Mic to Speak Directly:</span>", unsafe_allow_html=True)
     
     import streamlit.components.v1 as components
@@ -178,12 +177,10 @@ with col2:
         <button id="recordBtn" style="background-color: #ff4b4b; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(255,75,75,0.3);">🎙️ CLICK TO TALK</button>
         <p id="status" style="color: #b0b0b5; font-family: sans-serif; font-size: 13px; margin-top: 8px;">Ready to record</p>
     </div>
-    
     <script>
         const recordBtn = document.getElementById('recordBtn');
         const status = document.getElementById('status');
         let isRecording = false;
-
         recordBtn.onclick = () => {
             if (!isRecording) {
                 isRecording = true;
@@ -201,7 +198,6 @@ with col2:
     """
     components.html(custom_mic_html, height=120)
     
-    # Text Box input element
     user_text = st.text_input("Or Type your order/question here:", key="user_message_input")
     
     if st.button("Send Message") and user_text:
@@ -223,7 +219,6 @@ with col2:
         elif isinstance(msg, AIMessage):
             st.markdown(f"**🤖 Agent:** {msg.content}")
             
-            # --- AUDIO OUTPUT BOT TTS ENGINE ---
             try:
                 clean_speech_text = re.sub(r'[*_#`\-]', '', msg.content)
                 tts = gTTS(text=clean_speech_text, lang='en', slow=False)
@@ -233,3 +228,5 @@ with col2:
                     audio_bytes = f.read()
                 b64_audio = base64.b64encode(audio_bytes).decode()
                 
+                audio_html = f'<audio src="data:audio/mp3;base64,{b64_audio}" autoplay controls style="width: 100%; margin-top: 8px; height: 35px;"></audio>'
+                st.markdown(audio_html, unsafe_allow_html=True)
