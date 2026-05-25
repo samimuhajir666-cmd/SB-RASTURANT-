@@ -9,7 +9,7 @@ from gtts import gTTS
 import base64
 
 # --- 1. Global API Key & Environment Setup ---
-OPENAI_API_KEY="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"
+OPENAI_API_KEY="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"
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 # --- 2. Ultra-Clean UI Custom Styles ---
