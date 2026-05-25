@@ -70,23 +70,6 @@ def apply_premium_styles_from_url():
         unsafe_allow_html=True
     )
 
-# --- Voice Sunane K Liye (Text-To-Speech Autoplay Setup) ---
-def play_voice_output(text_to_speak):
-    try:
-        clean_text = text_to_speak.replace("**", "").replace("*", "").replace("`", "")
-        tts = gTTS(text=clean_text, lang='en', slow=False)
-        tts.save("response.mp3")
-        
-        with open("response.mp3", "rb") as f:
-            audio_bytes = f.read()
-        audio_base64 = base64.b64encode(audio_bytes).decode()
-        audio_html = f'<audio src="data:audio/mp3;base64,{audio_base64}" autoplay="true" />'
-        st.markdown(audio_html, unsafe_allow_html=True)
-        
-        if os.path.exists("response.mp3"):
-            os.remove("response.mp3")
-    except Exception as e:
-        pass
 
 # --- 3. Menu Data File Parsers ---
 def get_category_menu(category_name):
