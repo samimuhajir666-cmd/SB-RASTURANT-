@@ -1,0 +1,65 @@
+
+---
+FAST FOOD & BURGERS
+---
+* Mighty Zinger Burger -------- Rs. 450
+* Juicy Beef Burger ----------- Rs. 420
+* Crispy Chicken Burger ------- Rs. 380
+* Club Sandwich --------------- Rs. 350
+* French Fries (Large) -------- Rs. 180
+
+---
+PIZZA CORNER
+---
+* Chicken Tikka Pizza
+  - Small: Rs. 450
+  - Jumbo: Rs. 1,450
+* Fajita Delight Pizza
+  - Small: Rs. 480
+  - Jumbo: Rs. 1,490
+* Special Supreme Pizza
+  - Small: Rs. 550
+  - Jumbo: Rs. 1,650
+
+---
+BIRYANI & TRADITIONAL RICE
+---
+* Special Beef Pulao ---------- Rs. 320
+* Sindhi Chicken Biryani ------ Rs. 350
+* Mughlai Mutton Pulao -------- Rs. 480
+
+---
+KARAHI & TRADITIONAL HANDI
+---
+* Chicken Karahi (Full) ------- Rs. 1,400
+* Chicken Karahi (Half) ------- Rs. 750
+* Mutton Karahi (Full) -------- Rs. 2,600
+* Chicken White Handi --------- Rs. 950
+
+---
+RAWAL / NIHARI
+---
+* Special Nalli Nihari
+  - Half Plate: Rs. 400
+  - Full Plate: Rs. 750
+* Magaz Nihari
+  - Half Plate: Rs. 450
+  - Full Plate: Rs. 850
+* Plain Chicken Nihari
+  - Half Plate: Rs. 300
+  - Full Plate: Rs. 580
+
+---
+REFRESHMENTS & DRINKS
+---
+* Soft Drink (Regular) -------- Rs. 80
+* Soft Drink (1.5 Litre) ------ Rs. 220
+* Mineral Water (Large) ------- Rs. 100
+* Fresh Lime ------------------ Rs. 120
+
+---
+ICE CREAM PARLOR
+---
+* Kulfa Jalabi Special -------- Rs. 250
+* Chocolate Scoop ------------- Rs. 120
+* Vanilla Shake --------------- Rs. 220
