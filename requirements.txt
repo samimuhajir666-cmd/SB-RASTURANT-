@@ -1,4 +1,5 @@
 streamlit
 langgraph
 langchain-openai
+python-dotenv
 gtts
