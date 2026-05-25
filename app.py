@@ -9,17 +9,19 @@ from gtts import gTTS
 import base64
 import re
 from dotenv import load_dotenv
-load_dotenv()
-api_key = os.getenv('OPENAI_API_KEY')
 
-# --- 1. Global API Key & Environment Setup (SECURE VERSION) ---
-# Streamlit ke Secrets se key automatic uthane ka tareeqa
+# --- 1. Global API Key & Environment Setup (FIXED & SECURE) ---
+# Pehle .env file load karein taake agar local ho to os.environ me key aa jaye
+load_dotenv()
+
+# Streamlit Secrets ya .env se key uthane ka saba se behtareen tareeqa
 if "OPENAI_API_KEY" in st.secrets:
-    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
     OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 else:
-    # Local machine par chalane ke liye backup setup
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    if OPENAI_API_KEY:
+        os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 # --- 2. Ultra-Clean UI Custom Styles ---
 def apply_premium_styles_from_url():
@@ -89,8 +91,11 @@ class AgentState(TypedDict):
     menu_data: str
 
 def manager_node(state: AgentState):
-    # Server framework automatic environment variable se key pick karega
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.6)
+    # FIXED: Explicitly passing api_key to avoid connection drops
+    if not OPENAI_API_KEY:
+        return {"messages": [AIMessage(content="⚠️ API Key missing. Please check your .env file or Streamlit Secrets.")]}
+        
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.6, openai_api_key=OPENAI_API_KEY)
     
     system_prompt = f"""
     You are the polite, energetic, and highly professional AI Sales Representative of 'Siddique Brothers Restaurant' located in Karachi.
@@ -112,7 +117,7 @@ def manager_node(state: AgentState):
         bot_output = llm.invoke(padded_messages)
         return {"messages": [AIMessage(content=bot_output.content)]}
     except Exception as e:
-        return {"messages": [AIMessage(content=f"⚠️ Counter Engine Notice: System ready. Please ensure connection details are filled.")]}
+        return {"messages": [AIMessage(content=f"⚠️ Connection Notice: {str(e)}")]}
 
 workflow = StateGraph(AgentState)
 workflow.add_node("manager", manager_node)
@@ -166,125 +171,33 @@ with col1:
 with col2:
     st.markdown("<h2 style='margin-top: 0;'>💬 Smart Voice Desk</h2>", unsafe_allow_html=True)
     
-    processed_query = ""
-    latest_ai_response = ""
+    # Text input fallback for quick testing and seamless chats
+    user_text = st.text_input("Type your order/question here:", key="user_message_input")
     
-    # Custom high-speed native JavaScript voice recorder component
-    import streamlit.components.v1 as components
-    
-    st.markdown("<span style='font-size: 14px; font-weight: 500; color: #ff4b4b !important;'>🎙️ Tap Mic to Speak Directly:</span>", unsafe_allow_html=True)
-    
-    custom_mic_html = """
-    <div style="text-align: center; padding: 10px;">
-        <button id="recordBtn" style="background-color: #ff4b4b; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(255,75,75,0.3);">🎙️ CLICK TO TALK</button>
-        <p id="status" style="color: #b0b0b5; font-family: sans-serif; font-size: 13px; margin-top: 8px;">Ready to record</p>
-    </div>
-    
-    <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        const recordBtn = document.getElementById('recordBtn');
-        const status = document.getElementById('status');
-        let isRecording = false;
-
-        recordBtn.onclick = async () => {
-            if (!isRecording) {
-                audioChunks = [];
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const reader = new FileReader();
-                    reader.readAsDataURL(audioBlob);
-                    reader.onloadend = () => {
-                        const base64Audio = reader.result.split(',')[1];
-                        window.parent.postMessage({type: 'streamlit:setComponentValue', value: base64Audio}, '*');
-                    };
-                    status.innerText = "Processing Voice...";
-                    recordBtn.style.backgroundColor = "#ff4b4b";
-                    recordBtn.innerText = "🎙️ CLICK TO TALK";
-                };
-                mediaRecorder.start();
-                isRecording = true;
-                status.innerText = "🔴 Listening... Speak now!";
-                recordBtn.style.backgroundColor = "#d32f2f";
-                recordBtn.innerText = "⏹️ STOP RECORDING";
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-            }
-        };
-    </script>
-    """
-    
-    voice_data = components.html(custom_mic_html, height=100)
-    
-    if voice_data:
-        with st.spinner("Converting voice to text..."):
-            try:
-                raw_voice_bytes = base64.b64decode(voice_data)
-                audio_file_payload = ("live_audio.wav", raw_voice_bytes, "audio/wav")
-                
-                from openai import OpenAI
-                # Fetching cloud configuration key injection safely
-                client = OpenAI(api_key=OPENAI_API_KEY)
-                
-                transcription = client.audio.transcriptions.create(
-                    model="whisper-1", 
-                    file=audio_file_payload
-                )
-                
-                if transcription.text:
-                    processed_query = transcription.text
-                    st.info(f"🗣️ You Said: \"{processed_query}\"")
-            except Exception as e:
-                pass
-
-    st.write("---")
-    
-    # ⌨️ TEXT INPUT OPTION
-    with st.form(key="chat_form", clear_on_submit=True):
-        text_query = st.text_input("Or type your message here instead:")
-        submit_button = st.form_submit_button(label="Send Message")
+    if st.button("Send Message") and user_text:
+        # Run AI processing logic
+        menu_content = get_full_menu_for_ai()
         
-    if submit_button and text_query:
-        processed_query = text_query
-    
-    # --- Execute LangGraph State Graph Processing ---
-    if processed_query:
-        st.session_state.chat_history.append(HumanMessage(content=processed_query))
-        with st.spinner("Siddique Brothers Agent responding..."):
-            initial_state = {
-                "messages": st.session_state.chat_history,
-                "menu_data": get_full_menu_for_ai()
-            }
-            config = {"configurable": {"thread_id": "sami_restaurant_session"}}
-            final_output = restaurant_app.invoke(initial_state, config=config)
-            
-            ai_msg = final_output["messages"][-1]
-            st.session_state.chat_history.append(ai_msg)
+        # Append User Message to history format
+        st.session_state.chat_history.append(HumanMessage(content=user_text))
+        
+        # Invoke LangGraph
+        config = {"configurable": {"thread_id": "restaurant_live_session"}}
+        response = restaurant_app.invoke(
+            {"messages": st.session_state.chat_history, "menu_data": menu_content}, 
+            config
+        )
 
-    # Rendering the History Panel Look
-    if st.session_state.chat_history:
-        st.markdown("<h3 style='margin-top: 20px; font-size: 16px; color: #ff4b4b !important;'>Live Counter Chat History</h3>", unsafe_allow_html=True)
-        for msg in reversed(st.session_state.chat_history):
-            if isinstance(msg, AIMessage):
-                st.markdown(
-                    f"""
-                    <div class="glass-card">
-                        <h4 style='margin-top:0; color:#ff4b4b !important; font-size:15px; margin-bottom: 8px;'>🤖 Siddique Brothers Agent:</h4>
-                        <p style='font-size:15px; line-height: 1.6; margin: 0; white-space: pre-line;'>{msg.content}</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-            elif isinstance(msg, HumanMessage):
-                st.markdown(
-                    f"""
-                    <div style="padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 8px; margin-bottom: 5px; margin-top: 5px;">
-                        <span style="color: #ff4b4b !important; font-weight: bold;">👤 You:</span> <span style="font-size: 15px;">{msg.content}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+        
+        # Update chat history with AI Response
+        st.session_state.chat_history = response["messages"]
+    
+    # Display Elegant Chat History Inside Glass Card UI
+    st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+    for msg in st.session_state.chat_history:
+        if isinstance(msg, HumanMessage):
+            st.markdown(f"**👤 You:** {msg.content}")
+        elif isinstance(msg, AIMessage):
+            st.markdown(f"**🤖 Agent:** {msg.content}")
+            st.write("---")
+    st.markdown("</div>", unsafe_allow_html=True)
