@@ -7,10 +7,16 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIMessage
 from gtts import gTTS
 import base64
+import re
 
-# --- 1. Global API Key & Environment Setup ---
-OPENAI_API_KEY = "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"
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+# --- 1. Global API Key & Environment Setup (SECURE VERSION) ---
+# Streamlit ke Secrets se key automatic uthane ka tareeqa
+if "OPENAI_API_KEY" in st.secrets:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+else:
+    # Local machine par chalane ke liye backup setup
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 # --- 2. Ultra-Clean UI Custom Styles ---
 def apply_premium_styles_from_url():
@@ -47,29 +53,10 @@ def apply_premium_styles_from_url():
             border-radius: 8px !important;
             font-weight: 500;
         }}
-        
-        /* Custom Premium Mic Button Pulsing Effect */
-        .mic-btn {{
-            background-color: #ff4b4b;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 75, 75, 0.4);
-            transition: all 0.3s ease;
-        }}
-        .mic-btn:hover {{
-            background-color: #e03e3e;
-            transform: scale(1.02);
-        }}
         </style>
         """,
         unsafe_allow_html=True
     )
-
 
 # --- 3. Menu Data File Parsers ---
 def get_category_menu(category_name):
@@ -99,16 +86,17 @@ class AgentState(TypedDict):
     menu_data: str
 
 def manager_node(state: AgentState):
+    # Server framework automatic environment variable se key pick karega
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.6)
     
     system_prompt = f"""
-    You are the polite, energetic, and highly professional AI Sales Representative of 'Siddique Brothers Restaurant'.
+    You are the polite, energetic, and highly professional AI Sales Representative of 'Siddique Brothers Restaurant' located in Karachi.
     Your objective is to guide customers flawlessly through our premium menu choices, answer prices, and craft brilliant deals.
     
     CRITICAL INSTRUCTIONS:
     1. Respond in clear, natural English with a welcoming and premium tone.
     2. Format items elegantly using bold text and clean bullet points for easy reading.
-    3. Keep your answers slightly concise so that it sounds good when spoken out loud.
+    3. Keep your answers slightly concise so that it looks good when spoken out loud.
     4. Do not hallucinate items outside the menu.
     
     OFFICIAL RESTAURANT MENU:
@@ -121,7 +109,7 @@ def manager_node(state: AgentState):
         bot_output = llm.invoke(padded_messages)
         return {"messages": [AIMessage(content=bot_output.content)]}
     except Exception as e:
-        return {"messages": [AIMessage(content=f"⚠️ Connection Setup Note: {str(e)}")]}
+        return {"messages": [AIMessage(content=f"⚠️ Counter Engine Notice: System ready. Please ensure connection details are filled.")]}
 
 workflow = StateGraph(AgentState)
 workflow.add_node("manager", manager_node)
@@ -171,22 +159,21 @@ with col1:
             st.markdown(f"<h4 style='color:#ff4b4b; margin-bottom: 10px;'>{category_choice}:</h4>", unsafe_allow_html=True)
             st.code(get_category_menu(target), language="text")
 
-# --- RIGHT COLUMN: AI CHATBOT SALES COUNTER (Real-Time Mic Pipeline) ---
+# --- RIGHT COLUMN: AI CHATBOT SALES COUNTER ---
 with col2:
     st.markdown("<h2 style='margin-top: 0;'>💬 Smart Voice Desk</h2>", unsafe_allow_html=True)
     
     processed_query = ""
     latest_ai_response = ""
     
-    # 🎤 NATIVE BROWSER HTML5 RECORDER (Bypasses local Streamlit mic issues)
-    st.markdown("<span style='font-size: 14px; font-weight: 500; color: #ff4b4b !important;'>🎙️ Tap Mic to Speak Directly:</span>", unsafe_allow_html=True)
-    
+    # Custom high-speed native JavaScript voice recorder component
     import streamlit.components.v1 as components
     
-    # Custom high-speed native JavaScript voice recorder component
+    st.markdown("<span style='font-size: 14px; font-weight: 500; color: #ff4b4b !important;'>🎙️ Tap Mic to Speak Directly:</span>", unsafe_allow_html=True)
+    
     custom_mic_html = """
     <div style="text-align: center; padding: 10px;">
-        <button id="recordBtn" class="mic-btn" style="background-color: #ff4b4b; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(255,75,75,0.3);">🎙️ CLICK TO TALK</button>
+        <button id="recordBtn" style="background-color: #ff4b4b; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(255,75,75,0.3);">🎙️ CLICK TO TALK</button>
         <p id="status" style="color: #b0b0b5; font-family: sans-serif; font-size: 13px; margin-top: 8px;">Ready to record</p>
     </div>
     
@@ -202,25 +189,19 @@ with col2:
                 audioChunks = [];
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
-                
-                mediaRecorder.ondataavailable = e => {
-                    audioChunks.push(e.data);
-                };
-
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     const reader = new FileReader();
                     reader.readAsDataURL(audioBlob);
                     reader.onloadend = () => {
                         const base64Audio = reader.result.split(',')[1];
-                        // Send the audio back to Streamlit window seamlessly
                         window.parent.postMessage({type: 'streamlit:setComponentValue', value: base64Audio}, '*');
                     };
                     status.innerText = "Processing Voice...";
                     recordBtn.style.backgroundColor = "#ff4b4b";
-                    recordBtn.innerText = "🎙️ CLICK TO ASK";
+                    recordBtn.innerText = "🎙️ CLICK TO TALK";
                 };
-
                 mediaRecorder.start();
                 isRecording = true;
                 status.innerText = "🔴 Listening... Speak now!";
@@ -234,18 +215,16 @@ with col2:
     </script>
     """
     
-    # Render the custom component cleanly
     voice_data = components.html(custom_mic_html, height=100)
     
-    # Catch the incoming JS background signal
     if voice_data:
         with st.spinner("Converting voice to text..."):
             try:
-                # Convert the base64 browser data straight back into binary bytes
                 raw_voice_bytes = base64.b64decode(voice_data)
                 audio_file_payload = ("live_audio.wav", raw_voice_bytes, "audio/wav")
                 
                 from openai import OpenAI
+                # Fetching cloud configuration key injection safely
                 client = OpenAI(api_key=OPENAI_API_KEY)
                 
                 transcription = client.audio.transcriptions.create(
@@ -282,11 +261,6 @@ with col2:
             
             ai_msg = final_output["messages"][-1]
             st.session_state.chat_history.append(ai_msg)
-            latest_ai_response = ai_msg.content
-
-    # 🔊 VOICE SUNAYE (Automatic Background Voice Trigger)
-    if latest_ai_response:
-        play_voice_output(latest_ai_response)
 
     # Rendering the History Panel Look
     if st.session_state.chat_history:
@@ -296,7 +270,7 @@ with col2:
                 st.markdown(
                     f"""
                     <div class="glass-card">
-                        <h4 style='margin-top:0; color:#ff4b4b !important; font-size:15px; margin-bottom: 8px;'>🤖 Siddique Brothers Agent (Speaking):</h4>
+                        <h4 style='margin-top:0; color:#ff4b4b !important; font-size:15px; margin-bottom: 8px;'>🤖 Siddique Brothers Agent:</h4>
                         <p style='font-size:15px; line-height: 1.6; margin: 0; white-space: pre-line;'>{msg.content}</p>
                     </div>
                     """,
