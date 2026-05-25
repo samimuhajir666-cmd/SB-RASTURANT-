@@ -7,8 +7,9 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIMessage
 
 # --- 1. Global Setup ---
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", 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"")
-
+# --- 1. Global Setup ---
+GROQ_API_KEY = "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"
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 # --- 2. Premium UI Styles ---
 def apply_premium_styles_from_url():
     bg_style = "linear-gradient(135deg, #14141f 0%, #0b0b10 100%)"    
