@@ -187,7 +187,6 @@ with col2:
             {"messages": st.session_state.chat_history, "menu_data": menu_content}, 
             config
         )
-
         
         # Update chat history with AI Response
         st.session_state.chat_history = response["messages"]
