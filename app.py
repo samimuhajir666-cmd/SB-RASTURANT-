@@ -6,7 +6,7 @@ from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIMessage
 
-# --- 1. Global Setup (Aapki Groq Key Fix Kar Di Hai) ---
+# --- 1. Global Setup (Aapki Groq Key Fix Hai) ---
 GROQ_API_KEY = "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"
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
@@ -78,8 +78,8 @@ class AgentState(TypedDict):
     menu_data: str
 
 def manager_node(state: AgentState):
-    # Llama 3 8b model call via Groq
-    llm = ChatGroq(model="llama3-8b-8192", groq_api_key=GROQ_API_KEY, temperature=0.5)
+    # 🔥 FIX: Groq ka naya supported model 'llama-3.1-8b-instant' use kiya hai
+    llm = ChatGroq(model="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY, temperature=0.5)
     
     system_prompt = f"""You are the polite, energetic, and highly professional AI Sales Representative of 'Siddique Brothers Restaurant' located in Karachi.
 Your objective is to guide customers flawlessly through our premium menu choices, answer prices, and craft brilliant deals.
@@ -92,7 +92,6 @@ CRITICAL INSTRUCTIONS:
 OFFICIAL RESTAURANT MENU:
 {state['menu_data']}"""
 
-    # 🔥 400 BAD REQUEST ERROR FIX: Messages ko flat list mein clean format karna
     formatted_messages = [SystemMessage(content=system_prompt)]
     
     for msg in state["messages"]:
