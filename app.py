@@ -180,7 +180,6 @@ with col2:
     </div>
     
     <script>
-        // Aapka mic handling javascript yahan automate ho raha hai
         const recordBtn = document.getElementById('recordBtn');
         const status = document.getElementById('status');
         let isRecording = false;
@@ -202,7 +201,7 @@ with col2:
     """
     components.html(custom_mic_html, height=120)
     
-    # Text Box input element for dual input support (Keyboard + Voice fallback)
+    # Text Box input element
     user_text = st.text_input("Or Type your order/question here:", key="user_message_input")
     
     if st.button("Send Message") and user_text:
@@ -226,9 +225,11 @@ with col2:
             
             # --- AUDIO OUTPUT BOT TTS ENGINE ---
             try:
-                # Clean response text from Markdown syntax for perfect speaking rhythm
                 clean_speech_text = re.sub(r'[*_#`\-]', '', msg.content)
                 tts = gTTS(text=clean_speech_text, lang='en', slow=False)
                 tts.save("response.mp3")
                 
                 with open("response.mp3", "rb") as f:
+                    audio_bytes = f.read()
+                b64_audio = base64.b64encode(audio_bytes).decode()
+                
