@@ -7,7 +7,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIMessage
-from openai import OpenAI
+
 
 # --- 1. Global Setup (Groq Key for AI, OpenAI Key for Whisper Voice) ---
 GROQ_API_KEY = "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"
